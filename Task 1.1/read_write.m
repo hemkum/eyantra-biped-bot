@@ -3,6 +3,8 @@ global A = csvread('csv_matter.csv');  #do not change this line
 ################################################
 #######Declare your global variables here#######
 ################################################
+int16 ax,ay,az;
+f_cut = 5;
 
 
 function read_accel(axl,axh,ayl,ayh,azl,azh)  
@@ -11,11 +13,15 @@ function read_accel(axl,axh,ayl,ayh,azl,azh)
   ####### Write a code here to combine the ########
   #### HIGH and LOW values from ACCELEROMETER #####
   #################################################
-
+  ax = bitand(axl,bitshift(axh, 8));
+  ay = bitand(ayl,bitshift(ayh, 8));
+  az = bitand(azl,bitshift(azh, 8));
+    
 
   ####################################################
   # Call function lowpassfilter(ax,ay,az,f_cut) here #
   ####################################################
+
 
 endfunction
 
@@ -36,21 +42,25 @@ endfunction
 
 
 function lowpassfilter(ax,ay,az,f_cut)
-  dT = ;  #time in seconds
-  Tau= ;
+  dT = 0.01 ;  #time in seconds
+  Tau= 1/2*pi*f_cut;
   alpha = Tau/(Tau+dT);                #do not change this line
-  
+
+  int8 ax_f,ay_f,az_f
   ################################################
   ##############Write your code here##############
   ################################################
+  for j = 1:n
+    
+    
   
 endfunction
 
 
 
 function highpassfilter(gx,gy,gz,f_cut)
-  dT = ;  #time in seconds
-  Tau= ;
+  dT = 0.01 ;  #time in seconds
+  Tau= 1/2*pi*f_cut;
   alpha = Tau/(Tau+dT);                #do not change this line
   
   ################################################
