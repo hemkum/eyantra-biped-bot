@@ -3,100 +3,91 @@ global A = csvread('csv_matter.csv');  #do not change this line
 ################################################
 #######Declare your global variables here#######
 ################################################
-global a_x;
-global a_y;
-global a_z;
+global l;
 global f_cut = 5;
-#PLL with X axis gyroscope reference(Power mgmt)
+global a_raw = zeros(8000,3);
+global a_filtered = zeros(8000,3);
+global g_raw = zeros(8000,3);
+global g_filtered = zeros(8000,3);
+global  B =zeros(8000,2);
 
-function read_accel(axl,axh,ayl,ayh,azl,azh) 
- 
-  # Range of accelerometer is ± 2g
+function  read_accel(axl,axh,ayl,ayh,azl,azh)    
   #################################################
   ####### Write a code here to combine the ########
   #### HIGH and LOW values from ACCELEROMETER #####
   #################################################
-  global A;
-  uint16 ax;
-  uint16 ay;
-  uint16 az;
-  int16 ax2;
-  int16 ay2;
-  int16 az2;
-  ax = bitor(axl,bitshift(axh, 8));
-  ay = bitor(ayl,bitshift(ayh, 8));
-  az = bitor(azl,bitshift(azh, 8));
-  for p=1:rows(A)
-  if ax(p)>32768
-    ax2(p) = (ax(p) - 65536)*2/32768
-  else
-    ax2(p) = ax(p)*2/32768
-  endif
-  if ay(p)>32768
-    ay2(p) = (ay(p) - 65536)*2/32768
-  else
-    ay2(p) = ay(p)*2/32768
-  endif
-  if az(p)>32768
-    az2(p) = (az(p) - 65536)*2/32768
-  else
-    az2(p) = az(p)*2/32768
-  endif
+  global f_cut l a_raw ;
+
+  a_raw(l,1) = bitor(axl,bitshift(axh,8));
+  a_raw(l,2) = bitor(ayl,bitshift(ayh,8));
+  a_raw(l,3) = bitor(azl,bitshift(azh,8));
+  
+  for i=1:columns(a_raw)
+    if (a_raw(l,i) > 32767)
+      a_raw(l,i) = (a_raw(l,i) - 65536)/16384;
+    else
+      a_raw(l,i) = a_raw(l,i)/16384;
+    endif
   endfor
-  
-  
-  global f_cut;
+
   ####################################################
   # Call function lowpassfilter(ax,ay,az,f_cut) here #
   ####################################################
-  lowpassfilter(ax2,ay2,az2,f_cut);
+  lowpassfilter(a_raw(l,1), a_raw(l,2), a_raw(l,3), f_cut);
   
-
 endfunction
 
 function read_gyro(gxl,gxh,gyl,gyh,gzl,gzh)
   
-  # Range of gyro is ±250°/s
   #################################################
   ####### Write a code here to combine the ########
   ###### HIGH and LOW values from GYROSCOPE #######
   #################################################
+  global f_cut l g_raw ;
+ 
+  g_raw(l,1) = bitor(gxl,bitshift(gxh,8));
+  g_raw(l,2) = bitor(gyl,bitshift(gyh,8));
+  g_raw(l,3) = bitor(gzl,bitshift(gzh,8));   
 
-
+  for i=1:columns(g_raw)
+    if (g_raw(l,i) > 32767)
+      g_raw(l,i) = (g_raw(l,i) - 65536)/131;
+    else
+      g_raw(l,i) = g_raw(l,i)/131;
+    endif
+  endfor
   #####################################################
   # Call function highpassfilter(ax,ay,az,f_cut) here #
-  #####################################################
+  #####################################################;
+  highpassfilter(g_raw(l,1), g_raw(l,2), g_raw(l,3),f_cut);
 
 endfunction
 
-
-
 function lowpassfilter(ax,ay,az,f_cut)
+   global f_cut l a_filtered a_raw ;
   dT = 0.01 ;  #time in seconds
-  Tau= 1/(2*pi*f_cut);
+  Tau= 1/(2*pi*f_cut) ;
   alpha = Tau/(Tau+dT);                #do not change this line
-  global a_x;
-  global a_y;
-  global a_z;
-  global A;
+  
   ################################################
   ##############Write your code here##############
   ################################################
-  a_x(1) = ax(1);
-  a_y(1) = ay(1);
-  a_z(1) = az(1);
 
-  for j = 2:rows(A)
-      a_x(j) = (1-alpha)*ax(j) + alpha*a_x(j-1)
-      a_y(j) = (1-alpha)*ay(j) + alpha*a_y(j-1)
-      a_z(j) = (1-alpha)*az(j) + alpha*a_z(j-1)
-  endfor
-
+  if (l ==1)
+      for i=1:columns(a_raw)
+        a_filtered(1,i)=a_raw(1,i);
+      endfor
+  else
+      for k=1:columns(a_raw)
+        a_filtered(l,k)=(1-alpha)*a_raw(l,k)+alpha*a_filtered(l-1,k);
+      endfor
+  endif
 endfunction
 
 
 
 function highpassfilter(gx,gy,gz,f_cut)
+    global f_cut l  g_filtered g_raw ;
   dT = 0.01 ;  #time in seconds
   Tau= 1/(2*pi*f_cut);
   alpha = Tau/(Tau+dT);                #do not change this line
@@ -104,7 +95,17 @@ function highpassfilter(gx,gy,gz,f_cut)
   ################################################
   ##############Write your code here##############
   ################################################
-  
+
+     if (l ==1)
+      for i=1:columns(g_raw)
+      g_filtered(l,i)=1;
+      endfor
+     else
+      for k=1:columns(g_raw)
+        g_filtered(l,k)= (1-alpha)*g_filtered(l-1,k) + (1-alpha)* (g_raw(l,k)-g_raw(l-1,k));
+      endfor
+     endif
+
 endfunction
 
 function comp_filter_pitch(ax,ay,az,gx,gy,gz)
@@ -113,6 +114,15 @@ function comp_filter_pitch(ax,ay,az,gx,gy,gz)
   ####### Write a code here to calculate  ######
   ####### PITCH using complementry filter ######
   ##############################################
+global B l;
+dT = 0.01;
+alpha = 0.03;
+acc = atand(ay/az);
+  if(l==1)
+    B(l,1) = (1-alpha)*( gx*dT ) + alpha * acc;
+  else
+    B(l,1) = (1-alpha)*(B(l-1,1) + gx*dT) + alpha * acc;
+  endif
 
 endfunction 
 
@@ -122,46 +132,34 @@ function comp_filter_roll(ax,ay,az,gx,gy,gz)
   ####### Write a code here to calculate #######
   ####### ROLL using complementry filter #######
   ##############################################
-
+  global B l;
+  dT = 0.01;
+  alpha = 0.03;
+  acc = atand(ax/az);
+  if(l==1)
+    B(l,2) = (1 - alpha)* ( gy*dT ) + alpha*acc ;
+  else
+     B(l,2) = (1 - alpha)* (B(l-1,2) + gy*dT) + alpha*acc ;
+  endif
 endfunction 
 
 function execute_code
   
-  global A;
-
-  uint8 axl;
-  uint8 axh;
-  uint8 ayl;
-  uint8 ayh;
-  uint8 azl;
-  uint8 azh;
-  uint8 gxl;
-  uint8 gxh;
-  uint8 gyl;
-  uint8 gyh;
-  uint8 gzl;
-  uint8 gzh;
-
+  global l A B a_filtered g_filtered ;
   for n = 1:rows(A)                    #do not change this line
     
     ###############################################
     ####### Write a code here to calculate  #######
-    ####### PITCH using complementry filter #######
+    ####### PITCH using complementry filter #######    
     ###############################################
+    l = n;
+    read_accel(A(n,1), A(n,2), A(n,3), A(n,4), A(n,5), A(n,6));
+    read_gyro(A(n,7), A(n,8), A(n,9), A(n,10), A(n,11), A(n,12));
+    comp_filter_pitch(a_filtered(n,1),a_filtered(n,2),a_filtered(n,3),g_filtered(n,1),g_filtered(n,2),g_filtered(n,3));
+    comp_filter_roll(a_filtered(n,1),a_filtered(n,2),a_filtered(n,3),g_filtered(n,1),g_filtered(n,2),g_filtered(n,3));
 
-  axh(n) = A(n,1);
-  axl(n) = A(n,2);
-  ayh(n) = A(n,3);
-  ayl(n) = A(n,4);
-  azh(n) = A(n,5);
-  azl(n) = A(n,6);
-  
   endfor
-
-  read_accel(axl,axh,ayl,ayh,azl,azh);
-  #read_gyro(gxl,gxh,gyl,gyh,gzl,gzh);
-
-  #csvwrite('output_data.csv',B);        #do not change this line
+  csvwrite('output_data.csv',B);        #do not change this line
 endfunction
 
 
