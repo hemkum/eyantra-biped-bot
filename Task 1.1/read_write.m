@@ -98,7 +98,7 @@ function highpassfilter(gx,gy,gz,f_cut)
 
      if (l ==1)
       for i=1:columns(g_raw)
-      g_filtered(l,i)=1;
+      g_filtered(l,i)=g_raw(l,i);
       endfor
      else
       for k=1:columns(g_raw)
