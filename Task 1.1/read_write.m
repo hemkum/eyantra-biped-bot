@@ -3,6 +3,7 @@ global A = csvread('csv_matter.csv');  #do not change this line
 ################################################
 #######Declare your global variables here#######
 ################################################
+warning('off', 'all');
 global l;
 global f_cut = 5;
 global a_raw = zeros(8000,3);
@@ -117,7 +118,8 @@ function comp_filter_pitch(ax,ay,az,gx,gy,gz)
 global B l;
 dT = 0.01;
 alpha = 0.03;
-acc = atand(ay/az);
+#acc = atand(ay/az);
+acc = atand(ay/sqrt(ax**2 + az**2) );
   if(l==1)
     B(l,1) = (1-alpha)*( gx*dT ) + alpha * acc;
   else
@@ -135,7 +137,7 @@ function comp_filter_roll(ax,ay,az,gx,gy,gz)
   global B l;
   dT = 0.01;
   alpha = 0.03;
-  acc = atand(ax/az);
+  acc = atand(-1*ax/sqrt(ay**2 + az**2)) ;
   if(l==1)
     B(l,2) = (1 - alpha)* ( gy*dT ) + alpha*acc ;
   else
@@ -159,7 +161,15 @@ function execute_code
     comp_filter_roll(a_filtered(n,1),a_filtered(n,2),a_filtered(n,3),g_filtered(n,1),g_filtered(n,2),g_filtered(n,3));
 
   endfor
-  csvwrite('output_data.csv',B);        #do not change this line
+  csvwrite('output_data.csv',B);  #do not change this line
+  hold on
+  plot( B(1:1000,1))
+  #plot( B(1:1000,2))
+ 
+  #S = csvread('sample.csv');
+  #plot(S(1:1000,1))
+  #plot(S(1:1000,2))
+  hold off
 endfunction
 
 
