@@ -137,7 +137,7 @@ function comp_filter_roll(ax,ay,az,gx,gy,gz)
   global B l;
   dT = 0.01;
   alpha = 0.03;
-  acc = atand(-1*ax/sqrt(ay**2 + az**2)) ;
+  acc = atand(ax/sqrt(ay**2 + az**2)) ;
   if(l==1)
     B(l,2) = (1 - alpha)* ( gy*dT ) + alpha*acc ;
   else
@@ -155,20 +155,20 @@ function execute_code
     ####### PITCH using complementry filter #######    
     ###############################################
     l = n;
-    read_accel(A(n,1), A(n,2), A(n,3), A(n,4), A(n,5), A(n,6));
-    read_gyro(A(n,7), A(n,8), A(n,9), A(n,10), A(n,11), A(n,12));
+    read_accel(A(n,2), A(n,1), A(n,4), A(n,3), A(n,6), A(n,5));
+    read_gyro(A(n,8), A(n,7), A(n,10), A(n,9), A(n,12), A(n,11));
     comp_filter_pitch(a_filtered(n,1),a_filtered(n,2),a_filtered(n,3),g_filtered(n,1),g_filtered(n,2),g_filtered(n,3));
     comp_filter_roll(a_filtered(n,1),a_filtered(n,2),a_filtered(n,3),g_filtered(n,1),g_filtered(n,2),g_filtered(n,3));
 
   endfor
   csvwrite('output_data.csv',B);  #do not change this line
   hold on
-  plot( B(1:1000,1))
-  #plot( B(1:1000,2))
+  #plot( B(1:1000,1))
+  plot( B(1:1000,2))
  
-  #S = csvread('sample.csv');
+  S = csvread('sample.csv');
   #plot(S(1:1000,1))
-  #plot(S(1:1000,2))
+  plot(S(1:1000,2))
   hold off
 endfunction
 
