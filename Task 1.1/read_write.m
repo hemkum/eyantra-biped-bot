@@ -1,3 +1,4 @@
+clear all
 global A = csvread('csv_matter.csv');  #do not change this line
 
 ################################################
@@ -63,13 +64,12 @@ function lowpassfilter(ax,ay,az,f_cut)
   dT = 0.01 ;  #time in seconds
   Tau= 1/(2*pi*f_cut) ;
   alpha = Tau/(Tau+dT);                #do not change this line
-  
   ################################################
   ##############Write your code here##############
   ################################################
   if (l ==1)
       for i=1:columns(a_raw)
-        a_filtered(1,i)=a_raw(1,i);
+        a_filtered(l,i)=0;
       endfor
   else
       for k=1:columns(a_raw)
@@ -84,13 +84,12 @@ function highpassfilter(gx,gy,gz,f_cut)
   dT = 0.01 ;  #time in seconds
   Tau= 1/(2*pi*f_cut);
   alpha = Tau/(Tau+dT);                #do not change this line
-  
   ################################################
   ##############Write your code here##############
   ################################################
      if (l ==1)
       for i=1:columns(g_raw)
-      g_filtered(l,i)=g_raw(l,i);
+      g_filtered(l,i)=0;
       endfor
      else
       for k=1:columns(g_raw)
@@ -135,6 +134,7 @@ endfunction
 
 
 function execute_code
+  clear
   global l A B a_filtered g_filtered ;
   for n = 1:rows(A)                    #do not change this line
     ###############################################
@@ -142,20 +142,20 @@ function execute_code
     ####### PITCH using complementry filter #######    
     ###############################################
     l = n;
+    read_gyro(A(n,8), A(n,7), A(n,11), A(n,12), A(n,9), A(n,10));
+    #read_gyro(A(n,8), A(n,7), A(n,10), A(n,9), A(n,12), A(n,11)); //passing wrong args seems to hae no effect on final graph
     read_accel(A(n,2), A(n,1), A(n,4), A(n,3), A(n,6), A(n,5));
-    read_gyro(A(n,8), A(n,7), A(n,10), A(n,9), A(n,12), A(n,11));
     comp_filter_pitch(a_filtered(n,1),a_filtered(n,2),a_filtered(n,3),g_filtered(n,1),g_filtered(n,2),g_filtered(n,3));
     comp_filter_roll(a_filtered(n,1),a_filtered(n,2),a_filtered(n,3),g_filtered(n,1),g_filtered(n,2),g_filtered(n,3));
   endfor
   
   csvwrite('output_data.csv',B);  #do not change this line
-  hold on
-  plot( B(1:1000,1))
-  #plot( B(1:1000,2))
   S = csvread('sample.csv');
-  plot(S(1:1000,1))
-  #plot(S(1:1000,2))
-  hold off
+  figure(1);
+  plot( B(1:1000,1), "-;our pitch;", S(1:1000,1), ":.;sample pitch;");
+  figure(2);
+  plot( B(1:1000,2), "-;our roll;", S(1:1000,2), ":.;sample roll;");
+
 endfunction
 
 execute_code                           #do not change this line
